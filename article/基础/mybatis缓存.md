@@ -7,8 +7,6 @@
 
 
 ###缓存流程
-![一级缓存流程](../../image/article/mybatis-1.jpg)
-<img src="../../image/article/mybatis-1.jpg">
-![一级缓存流程](/image/article/mybatis-1.jpg)
+![一级缓存流程](https://github.com/tinyshuang/Note/blob/master/image/article/mybatis-1.jpg)
 
    

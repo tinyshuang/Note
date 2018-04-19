@@ -11,7 +11,7 @@ Mybatis缓存
 缓存流程
 -
 
-![一级缓存执行流程](https://github.com/tinyshuang/Note/blob/master/image/article/mybatis-1.jpg)
+![一级缓存执行流程](https://pic3.zhimg.com/80/v2-65b50fa087add440f70e29ce85aa624b_hd.jpg)
 ![一级缓存执行流程](https://pic3.zhimg.com/80/v2-65b50fa087add440f70e29ce85aa624b_hd.jpg)
 
 

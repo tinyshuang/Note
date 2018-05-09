@@ -170,6 +170,9 @@ zk内部原理
     观察者不参与投票,zk引入观察者的主要目的是提高读请求的可扩展性.
     写操作的吞吐率取决于仲裁数量的大小.如果我们加入更多的追随者,将需要更大的仲裁数量,而这将减少写操作的吞吐率.
     新加一个观察者的开销 : 对应于每一个已提交事务点引入一条额外消息.这个开销相对于增加参与投票的服务器来说小很多.
+    配置zk集群的观察者 : 
+        1.配置文件中添加以下行 : peerType = observer
+        2.server.x        [hostname]: m : n  [:observer] 的配置需加上observer
     
 >独立服务器
     
@@ -180,6 +183,73 @@ zk内部原理
      - B负责将事务持久化到磁盘上,实际上就是将事务追加到事务日志中,并生成快照数据.
      - C如果A中包含事务数据,则对zk数据树修改,否则读取数据树返回给客户端
          
+
          
+配置
+-
+
+>zk集群中使用**tickTime**作为超时时间单位.客户端最小会话超时时间为两个tick时间.
+
+    tickTime默认为3000ms,更低的tickTime值可以更快地发现超时问题,但也会导致更高的网络流量(心跳信息)和更高的CPU使用率(会话存储器的处理)
+    minSessionTimeout(最小会话时间)默认为tickTime的两倍.配置该值过低可能会导致错误的客户端故障检测,配置该参数值过高会延迟客户端故障的检测时间
+    maxSessionTimeout(最大会话超时时间),可以限制一个客户端消耗系统资源的时间,默认情况下maxSessionTimeout的时间为tickTime的20倍.
+    
+    客户端实际获得的超时时间不会低于minSessionTimeout也不会高于maxSessionTimeout
+    
+  
+>集群配置
++ initLimit      追随者最初连接到群首时得超时值,单位为tick的整数倍(配置该值需参考群首与追随者之间的网络差顺服速度情况,传输数据量的大小)
++ syncLimit      追随者与群首进行sync操作时得超时值,单位为tick值得倍数(该值依赖于网络的延迟和吞吐量)
++ leaderServer   指示群首服务器是否为客户端提供服务.默认值为yes
++ server.x        [hostname]: m : n  [:observer] . m代表事务发送的端口,n代表群首选举的端口,observer标志这台服务器是否是观察者
+
+
+>zk集群的重配置
+
+    重配置可以让维护人员不需要手工进行重配置操作而导致状态信息的破坏,而且不需要停止任何服务
+    使用动态配置之前zk集群的配置文件 :
+        tickTime=2000
+        initLimit=10
+        syncLimit=4
+        dataDir=./data
+        dataLogDir=./txnlog
+        clientPort=2182
+        server.1=127.0.0.1:2222:2223
+        server.2=127.0.0.1:3333:3334
+        server.3=127.0.0.1:4444:4445
+        
+     使用动态配置的zk集群配置方式 : 
+         tickTime=2000
+         initLimit=10
+         syncLimit=4
+         dataDir=./data
+         dataLogDir=./txnlog
+         dynamicConfigFile=./dyn.cfg   //指定动态文件的位置
+            
+          dync.dfg服务器配置形式如下 : 
+            server.id = host : m : n[:role];[client_address]client_port
+            
+             因此dyn.cfg动态文件如下 :
+              server.1=127.0.0.1:2222:2223:participant;2181
+              server.2=127.0.0.1:3333:3334:participant;2182
+              server.3=127.0.0.1:4444:4445:participant;2183
+     
+     
+    注意客户端连接的服务端口号配置已经移到动态文件配置!
+    当动态配置文件准备就绪时,就可以使用reconfig操作来重新配置一个集群,该操作可以增量或全量地进行更新操作.
+       增量方式 : 
+           reconfig -remove 2,3 -add \
+               server.4=127.0.0.1:5555:5556:participant;2184
+               server.5=127.0.0.1:4444:4445:participant;2185
+        全量方式 :
+           reconfig -file newconf     
+    
+    
+    
+    
+  
+               
+            
+  
     
     
